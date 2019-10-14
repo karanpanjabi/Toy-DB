@@ -1,10 +1,13 @@
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
 
-int create_table();
 
-int insert();
+// TODO: figure out appropriate signatures for each
+// TODO: figure out where to store schema
 
-int select();
+int create_table(char *tablename);
+int insert(char *tablename);
+int select(char *tablename);
+
 
 #endif
