@@ -1,0 +1,37 @@
+0.  All integers are stored in 2s-complement with LSB first
+    (little-endian).
+
+1.  Block 0 (header block) has metadata.  Starts with 32-bit integer
+    for block size.  Next 32 bits for max depth of B-tree.
+
+2.  B-tree containing B-tree offsets to table starts ("directory") at
+    block 1.
+
+3.  B-trees are always block aligned.
+
+4.  A node of a B-tree will occupy one block.  (Put first 16 bytes
+    or something for info about the node such as the number of elements
+    in the node; discuss further.)
+
+5.  An element of a B-tree consists of two 64-bit integers, one for
+    key and one for value.  Key is typically integral primary key,
+    except for the B-tree starting at block 1, which has integers
+    corresponding to the tables in the database.  Value is typically
+    the offset of the row corresponding to that key, except for the
+    directory, whose values contain the offsets in the file where the
+    B-trees for the corresponding tables ("table indexes") can be
+    found.
+
+6.  (Where to store schema?  Max size of schema?  Could be in the
+    header block.)
+
+7.  On create table, empty B-tree for that table is appended to file
+    (aligned to block), metadata is updated.
+
+8.  On insert into table, row is appended at end of file.  The
+    directory is used to locate B-tree for table to insert into.  That
+    B-tree is updated with offset of new row in the file.
+
+9.  On select, if query is on primary key, search using B-trees.  If
+    query is on anything else, iterate through all rows by traversing
+    B-tree and check if condition(s) is (are) satisfied.
