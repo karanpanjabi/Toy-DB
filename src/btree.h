@@ -14,15 +14,15 @@ typedef struct Btree {
 } Btree;
 
 
-int btreeii_open(Btree *s, char *filename, int32_t block_size,
+int btree_open(Btree *s, char *filename, int32_t block_size,
                  int32_t max_depth,
                  int do_create, int64_t offset);
 
-int btreeii_insert(Btree *s, int64_t key, int64_t value);
+int btree_insert(Btree *s, int64_t key, int64_t value);
 
-int btreeii_search(Btree *s, int64_t key, int64_t *value);
+int btree_search(Btree *s, int64_t key, int64_t *value);
 
-int btreeii_close(Btree *s);
+int btree_close(Btree *s);
 
 
 #endif
