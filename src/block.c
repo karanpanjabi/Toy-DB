@@ -51,9 +51,9 @@ int block_write(Block *s, FILE *fp, int64_t offset)
                 block should be written.
 
         Return Value:
-            -1: fseek error. errno is set by fseek.
             0: Success
             1: Failure
+            2: fseek error. errno is set by fseek.
     */
 
     
