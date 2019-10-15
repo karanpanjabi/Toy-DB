@@ -34,6 +34,14 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
 int btree_insert(Btree *s, int64_t key, int64_t value)
 {
 
+    /*
+        Insert the given key and value into the B-tree given by s
+
+        s: Pointer to Btree
+        key: Key to be stored in the B-tree
+        value: Value corresponding to the key to be stored
+    */
+
     
 
 }
