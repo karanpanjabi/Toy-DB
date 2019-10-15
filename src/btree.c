@@ -50,6 +50,16 @@ int btree_insert(Btree *s, int64_t key, int64_t value)
 int btree_search(Btree *s, int64_t key, int64_t *value)
 {
 
+    /*
+        Search for the given key in the B-tree given by s and store
+            the return value in the integer pointed to by value
+
+        s: Pointer to Btree
+        key: Key to search for in the B-tree
+        value: Pointer to integer where the value correspoinding to
+               key will be stored
+    */
+
     
 
 }
