@@ -14,20 +14,42 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
         Constructor Method:
             Stores essential details about the B-tree in s. Insert and
             search operations are called using s.
-        s: pointer to Btree struct
+        s: pointer to Btree struct. s must be allocated by caller.
         filename: File in which B-tree is present
         block_size: Size of blocks read from the file. Every node in
                     the B-tree should occupy one block.
         max_depth: Max allowed depth of the B-tree. This puts the
                    constraint on the max size of the B-tree.
-        do_create: Boolean value, 1 if the B-tree to be created,
-                   0 if it is already present
+        do_create: Boolean value, non-zero if the B-tree to be
+                   created, 0 if it is already present
         offset: Offset at which the B-tree is found in the file. Value
-                ignored if do_create is 1. In this case, empty B-tree
-                is appended to file
+                ignored if do_create is non-zero. In this case, empty
+                B-tree is appended to file
+
+        Return Value:
+            0: Success
+            1: Opening filename failed. fopen sets errno.
+            2: Metadata read error
     */
 
-    
+    s->fp = fopen(filename, "r+");
+    if (s->fp == NULL) {
+        return 1;
+    }
+
+    if (fwrite(&(s->block_size), sizeof(int32_t), 1, s->fp) < 1) {
+        
+    }
+
+    if (fwrite(&(s->max_depth), sizeof(int32_t), 1, s->fp) < 1) {
+        
+    }
+
+    if (do_create != 0) {
+
+        
+
+    }
 
 }
 
