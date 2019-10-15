@@ -11,7 +11,8 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
 {
 
     /*
-        Stores essential details about the B-tree in s. Insert and
+        Constructor Method:
+            Stores essential details about the B-tree in s. Insert and
             search operations are called using s.
         s: pointer to Btree struct
         filename: File in which B-tree is present
@@ -67,6 +68,11 @@ int btree_search(Btree *s, int64_t key, int64_t *value)
 
 int btree_close(Btree *s)
 {
+
+    /*
+        Destructor Method:
+            Free resources corresponding to s.
+    */
 
     
 
