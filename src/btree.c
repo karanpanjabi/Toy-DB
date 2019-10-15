@@ -30,6 +30,7 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
             0: Success
             1: Opening filename failed. fopen sets errno.
             2: Metadata read error
+            3: fseek or ftell failed and will set errno
     */
 
     s->fp = fopen(filename, "r+");
@@ -38,18 +39,29 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
     }
 
     if (fwrite(&(s->block_size), sizeof(int32_t), 1, s->fp) < 1) {
-        
+        return 2;
     }
 
     if (fwrite(&(s->max_depth), sizeof(int32_t), 1, s->fp) < 1) {
-        
+        return 2;
     }
 
     if (do_create != 0) {
 
-        
+        if (fseek(s->fp, 0, SEEK_END) == -1) {
+            return 3;
+        }
+
+        offset = ftell(s->fp);
+        if (offset == -1) {
+            return 3;
+        }
 
     }
+
+    s->offset = offset;
+
+    return 0;
 
 }
 
