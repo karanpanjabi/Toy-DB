@@ -87,4 +87,15 @@ int block_append(Block *s, FILE *fp)
             2: fseek error. errno is set by fseek.
     */
 
+    if (fseek(fp, 0, SEEK_END) == -1) {
+        return 2;
+    }
+
+    if (fwrite(s->block, sizeof(char), s->n_occupied, fp)
+            < s->n_occupied) {
+        return 1;
+    }
+
+    return 0;
+
 }
