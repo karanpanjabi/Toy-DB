@@ -57,6 +57,8 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
             return 3;
         }
 
+        // TODO: Append empty B-tree to end of s->fp
+
     }
 
     s->offset = offset;
