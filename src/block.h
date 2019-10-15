@@ -2,13 +2,14 @@
 #define FILE_H
 
 
-#include <inttyypes.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 
 typedef struct Block {
 
     int64_t block_size;
+    int64_t n_occupied;
     char *block;
 
 } Block;

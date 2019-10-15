@@ -28,7 +28,7 @@ int block_read(Block *s, FILE *fp, int64_t offset)
         return 2;
     }
 
-    if (fread(s->block, sizeof(char), s->block_size, 1, fp) == 0) {
+    if (fread(s->block, sizeof(char), s->block_size, fp) == 0) {
         return 1;
     }
 
@@ -39,6 +39,22 @@ int block_read(Block *s, FILE *fp, int64_t offset)
 
 int block_write(Block *s, FILE *fp, int64_t offset)
 {
+
+    /*
+        s: Pointer to an allocated Block where data will be written.
+           Data to write will be taken from s->block and s->block_size
+           bytes will be written if call is successful.
+        fp: File pointer to file where block must be written. File
+            must be opened in a mode where write to arbitrary offset
+            is permitted.
+        offset: Offset from the beginning the file from where the
+                block should be written.
+
+        Return Value:
+            -1: fseek error. errno is set by fseek.
+            0: Success
+            1: Failure
+    */
 
     
 
