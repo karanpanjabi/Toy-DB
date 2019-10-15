@@ -74,6 +74,17 @@ int block_write(Block *s, FILE *fp, int64_t offset)
 int block_append(Block *s, FILE *fp)
 {
 
-    
+    /*
+        s: Pointer to an allocated Block where data will be appended.
+           Data to append will be taken from s->block and
+           s->n_occupied bytes will be appended if call is successful.
+        fp: File pointer to file where block must be appended. File
+            must be opened in a mode where append is permitted.
+
+        Return Value:
+            0: Success
+            1: Write error
+            2: fseek error. errno is set by fseek.
+    */
 
 }
