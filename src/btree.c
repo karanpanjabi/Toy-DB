@@ -38,11 +38,11 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
         return 1;
     }
 
-    if (fwrite(&(s->block_size), sizeof(int32_t), 1, s->fp) < 1) {
+    if (fread(&(s->block_size), sizeof(int32_t), 1, s->fp) < 1) {
         return 2;
     }
 
-    if (fwrite(&(s->max_depth), sizeof(int32_t), 1, s->fp) < 1) {
+    if (fread(&(s->max_depth), sizeof(int32_t), 1, s->fp) < 1) {
         return 2;
     }
 
