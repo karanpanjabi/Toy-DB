@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define NODE_METADATA_SIZE (16)
+
 #include "btree.h"
 
 
@@ -33,6 +35,8 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
             3: fseek or ftell failed and will set errno
     */
 
+    int n_elems_per_node;
+
     s->fp = fopen(filename, "r+");
     if (s->fp == NULL) {
         return 1;
@@ -45,6 +49,9 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
     if (fread(&(s->max_depth), sizeof(int32_t), 1, s->fp) < 1) {
         return 2;
     }
+
+    n_elems_per_node = (s->block_size - NODE_METADATA_SIZE)
+                        / (sizeof(int64_t) * 2);
 
     if (do_create != 0) {
 
