@@ -18,10 +18,6 @@ int btree_open(Btree *s, char *filename,
             search operations are called using s.
         s: pointer to Btree struct. s must be allocated by caller.
         filename: File in which B-tree is present
-        block_size: Size of blocks read from the file. Every node in
-                    the B-tree should occupy one block.
-        max_depth: Max allowed depth of the B-tree. This puts the
-                   constraint on the max size of the B-tree.
         do_create: Boolean value, non-zero if the B-tree to be
                    created, 0 if it is already present
         offset: Offset at which the B-tree is found in the file. Value
