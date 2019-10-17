@@ -8,6 +8,13 @@
 int db_create(char *dbname)
 {
 
+    /*
+        Creates a file of name dbname and initializes metadata and
+            directory B-tree.
+
+        dbname: Name of database file to be created
+    */
+
     
 
 }
@@ -15,6 +22,12 @@ int db_create(char *dbname)
 
 int db_open(Database *db, char *dbname)
 {
+
+    /*
+        Open the database file dbname and store data in db
+
+        dbname: Name of database file to open
+    */
 
     
 
@@ -24,6 +37,10 @@ int db_open(Database *db, char *dbname)
 int db_create_table(Database *db, char *tablename)
 {
 
+    /*
+        
+    */
+
     
 
 }
@@ -31,6 +48,10 @@ int db_create_table(Database *db, char *tablename)
 
 int db_insert(Database *db, char *tablename, ...)
 {
+
+    /*
+        
+    */
 
     
 
@@ -43,6 +64,10 @@ int db_select(Database *db, char *tablename,
               int is_rhs_const, char *rhs)
 {
 
+    /*
+        
+    */
+
     
 
 }
@@ -50,6 +75,10 @@ int db_select(Database *db, char *tablename,
 
 int db_close(Database *db)
 {
+
+    /*
+        
+    */
 
     
 
