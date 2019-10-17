@@ -8,8 +8,7 @@
 #include "btree.h"
 
 
-int btree_open(Btree *s, char *filename, int32_t block_size,
-                 int32_t max_depth,
+int btree_open(Btree *s, char *filename,
                  int do_create, int64_t offset)
 {
 
