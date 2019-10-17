@@ -4,6 +4,7 @@
 
 #define NODE_METADATA_SIZE (16)
 
+#include "block.h"
 #include "btree.h"
 
 
@@ -38,6 +39,7 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
 
     int n_elems_per_node;
     char empty_btree_fill_byte;
+    Btree directory;
 
     s->fp = fopen(filename, "r+");
     if (s->fp == NULL) {
@@ -65,6 +67,11 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
         if (offset == -1) {
             return 3;
         }
+
+        directory = *s;
+
+        // B-tree directory is stored in Block 1
+        directory.offset = directory.block_size;
 
         // TODO: Update directory B-tree to store offset of new B-tree
 
