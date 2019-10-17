@@ -9,7 +9,7 @@
 
 
 int btree_open(Btree *s, char *filename,
-                 int do_create, int64_t offset)
+                 int do_create, int64_t root_offset)
 {
 
     /*
@@ -20,9 +20,9 @@ int btree_open(Btree *s, char *filename,
         filename: File in which B-tree is present
         do_create: Boolean value, non-zero if the B-tree to be
                    created, 0 if it is already present
-        offset: Offset at which the B-tree is found in the file. Value
-                ignored if do_create is non-zero. In this case, empty
-                B-tree is appended to file
+        root_offset: Offset at which the B-tree is found in the file.
+                     Value ignored if do_create is non-zero. In this
+                     case, empty B-tree is appended to file
 
         Return Value:
             0: Success
@@ -58,23 +58,23 @@ int btree_open(Btree *s, char *filename,
         if (fseek(s->fp, 0, SEEK_END) == -1) {
             return 3;
         }
-        offset = ftell(s->fp);
-        if (offset == -1) {
+        root_offset = ftell(s->fp);
+        if (root_offset == -1) {
             return 3;
         }
 
         directory = *s;
 
         // B-tree directory is stored in Block 1
-        directory.offset = directory.block_size;
+        directory.root_offset = directory.block_size;
 
-        // TODO: Update directory B-tree to store offset of new B-tree
+        // TODO: Update directory B-tree to store root_offset of new B-tree
 
         // TODO: Append empty B-tree to end of s->fp
 
     }
 
-    s->offset = offset;
+    s->root_offset = root_offset;
 
     return 0;
 
