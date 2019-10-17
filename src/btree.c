@@ -33,9 +33,11 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
             1: Opening filename failed. fopen sets errno.
             2: Metadata read error
             3: fseek or ftell failed and will set errno
+            4: do_create failed
     */
 
     int n_elems_per_node;
+    char empty_btree_fill_byte;
 
     s->fp = fopen(filename, "r+");
     if (s->fp == NULL) {
@@ -45,7 +47,6 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
     if (fread(&(s->block_size), sizeof(int32_t), 1, s->fp) < 1) {
         return 2;
     }
-
     if (fread(&(s->max_depth), sizeof(int32_t), 1, s->fp) < 1) {
         return 2;
     }
@@ -55,14 +56,17 @@ int btree_open(Btree *s, char *filename, int32_t block_size,
 
     if (do_create != 0) {
 
+        empty_btree_fill_byte = '\0';
+
         if (fseek(s->fp, 0, SEEK_END) == -1) {
             return 3;
         }
-
         offset = ftell(s->fp);
         if (offset == -1) {
             return 3;
         }
+
+        // TODO: Update directory B-tree to store offset of new B-tree
 
         // TODO: Append empty B-tree to end of s->fp
 
@@ -114,9 +118,19 @@ int btree_close(Btree *s)
 
     /*
         Destructor Method:
-            Free resources corresponding to s.
+            Free resources corresponding to s. Freeing memory
+            allocated for *(s) using malloc family of functions must
+            be freed by the caller.
+
+        Return Value:
+            0: Success
+            1: fclose failed. fclose will set errno.
     */
 
-    
+    if (fclose(s->fp) == EOF) {
+        return 1;
+    }
+
+    return 0;
 
 }
