@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +67,8 @@ int block_write(Block *s, FILE *fp, int64_t offset)
         return 1;
     }
 
+    fsync(fileno(fp));
+
     return 0;
 
 }
@@ -95,6 +98,8 @@ int block_append(Block *s, FILE *fp)
             < s->n_occupied) {
         return 1;
     }
+
+    fsync(fileno(fp));
 
     return 0;
 
