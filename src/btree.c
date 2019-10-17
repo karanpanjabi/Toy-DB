@@ -8,8 +8,9 @@
 #include "btree.h"
 
 
-int btree_open(Btree *s, FILE *fp,
-                 int do_create, int64_t root_offset)
+int btree_open(Btree *s, FILE *fp, int32_t block_size,
+               int32_t max_depth,
+               int do_create, int64_t root_offset)
 {
 
     /*
@@ -36,13 +37,8 @@ int btree_open(Btree *s, FILE *fp,
     Btree directory;
 
     s->fp = fp;
-
-    if (fread(&(s->block_size), sizeof(int32_t), 1, s->fp) < 1) {
-        return 2;
-    }
-    if (fread(&(s->max_depth), sizeof(int32_t), 1, s->fp) < 1) {
-        return 2;
-    }
+    s->block_size = block_size;
+    s->max_depth = max_depth;
 
     n_elems_per_node = (s->block_size - NODE_METADATA_SIZE)
                         / (sizeof(int64_t) * 2);
