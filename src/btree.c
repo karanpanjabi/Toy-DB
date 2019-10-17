@@ -8,7 +8,7 @@
 #include "btree.h"
 
 
-int btree_open(Btree *s, char *filename,
+int btree_open(Btree *s, FILE *fp,
                  int do_create, int64_t root_offset)
 {
 
@@ -17,7 +17,7 @@ int btree_open(Btree *s, char *filename,
             Stores essential details about the B-tree in s. Insert and
             search operations are called using s.
         s: pointer to Btree struct. s must be allocated by caller.
-        filename: File in which B-tree is present
+        fp: File pointer to filein which B-tree is present
         do_create: Boolean value, non-zero if the B-tree to be
                    created, 0 if it is already present
         root_offset: Offset at which the B-tree is found in the file.
@@ -26,7 +26,6 @@ int btree_open(Btree *s, char *filename,
 
         Return Value:
             0: Success
-            1: Opening filename failed. fopen sets errno.
             2: Metadata read error
             3: fseek or ftell failed and will set errno
             4: do_create failed
@@ -36,10 +35,7 @@ int btree_open(Btree *s, char *filename,
     char empty_btree_fill_byte;
     Btree directory;
 
-    s->fp = fopen(filename, "r+");
-    if (s->fp == NULL) {
-        return 1;
-    }
+    s->fp = fp;
 
     if (fread(&(s->block_size), sizeof(int32_t), 1, s->fp) < 1) {
         return 2;

@@ -16,7 +16,7 @@ typedef struct Btree {
 } Btree;
 
 
-int btree_open(Btree *s, char *filename,
+int btree_open(Btree *s, FILE *fp,
                  int do_create, int64_t root_offset);
 int btree_insert(Btree *s, int64_t key, int64_t value);
 int btree_search(Btree *s, int64_t key, int64_t *value);
