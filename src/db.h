@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 
 // TODO: figure out where to store schema
