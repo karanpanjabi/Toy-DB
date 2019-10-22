@@ -10,7 +10,7 @@
 #include "btree.h"
 
 
-int db_create(char *dbname)
+int db_create(char *dbname, int32_t max_depth)
 {
 
     /*
@@ -24,32 +24,89 @@ int db_create(char *dbname)
             1: File exists
             2: fopen or stat failed, errno set
             3: Write error
+            4: B-tree error
     */
+
+    int r;
 
     FILE *fp;
     struct stat dbfile_stat;
     int32_t block_size;
+    int n_elems_per_node;
+    int32_t btree_size;
+    int64_t bytes_written;
+    int32_t fwrite_rv;
+    int ret;
+    Btree directory;
 
     if (access(dbname, F_OK) == 0) {
-        return 1;
+        r = 1;
+        goto FILE_EXISTS;
     }
 
     fp = fopen(dbname, "w+");
     if (fp == NULL) {
-        return 2;
+        r = 2;
+        goto FOPEN_FAILED;
     }
 
     if (stat(dbname, &dbfile_stat) == -1) {
-        return 2;
+        r = 2;
+        goto STAT_FAILED;
     }
 
     block_size = dbfile_stat.st_blksize;
+    n_elems_per_node = ((block_size / 8) - 1) / 3;
+    btree_size = (n_elems_per_node + 2) * block_size;
 
     // TODO: Initialize file
 
+    bytes_written = 0;
+
+    if ((fwrite_rv = fwrite(&block_size, sizeof(int32_t), 1, fp)) == 1) {
+        r = 3;
+        goto FWRITE_FAILED;
+    }
+    bytes_written += fwrite_rv;
+
+    if ((fwrite_rv = fwrite(&max_depth, sizeof(int32_t), 1, fp)) == 1) {
+        r = 3;
+        goto FWRITE_FAILED;
+    }
+    bytes_written += fwrite_rv;
+
+    if ((fwrite_rv = fwrite("\0", sizeof(char),
+                            (block_size - bytes_written), fp))
+             < (block_size - bytes_written)) {
+        r = 3;
+        goto FWRITE_FAILED;
+    }
+
+    ret = btree_open(&directory, fp, block_size, max_depth, 1, 0);
+    if (ret != 0) {
+        r = 4;
+        goto BTREE_ERROR;
+    }
+    ret = btree_close(&directory);
+    if (ret != 0) {
+        r = 4;
+        goto BTREE_ERROR;
+    }
+
+    r = 0;
+    goto SUCCESS;
+
+    SUCCESS:
+    BTREE_ERROR:
+    FWRITE_FAILED:
+    STAT_FAILED:
+
     fclose(fp);
 
-    return 0;
+    FOPEN_FAILED:
+    FILE_EXISTS:
+
+    return r;
 
 }
 

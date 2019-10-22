@@ -17,7 +17,7 @@ typedef struct Database {
 } Database;
 
 
-int db_create(char *dbname);
+int db_create(char *dbname, int32_t max_depth);
 int db_open(Database *db, char *dbname);
 int db_create_table(Database *db, char *tablename);
 int db_insert(Database *db, char *tablename, ...);
