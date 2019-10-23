@@ -35,7 +35,7 @@ int db_create(char *dbname, int32_t max_depth)
     int n_elems_per_node;
     int32_t btree_size;
     int64_t bytes_written;
-    int32_t fwrite_rv;
+    int32_t fw_rv;
     int ret;
     Btree directory;
 
@@ -63,19 +63,19 @@ int db_create(char *dbname, int32_t max_depth)
 
     bytes_written = 0;
 
-    if ((fwrite_rv = fwrite(&block_size, sizeof(int32_t), 1, fp)) == 1) {
+    if ((fw_rv = fwrite(&block_size, sizeof(int32_t), 1, fp)) == 1) {
         r = 3;
         goto FWRITE_FAILED;
     }
-    bytes_written += fwrite_rv;
+    bytes_written += fw_rv;
 
-    if ((fwrite_rv = fwrite(&max_depth, sizeof(int32_t), 1, fp)) == 1) {
+    if ((fw_rv = fwrite(&max_depth, sizeof(int32_t), 1, fp)) == 1) {
         r = 3;
         goto FWRITE_FAILED;
     }
-    bytes_written += fwrite_rv;
+    bytes_written += fw_rv;
 
-    if ((fwrite_rv = fwrite("\0", sizeof(char),
+    if ((fw_rv = fwrite("\0", sizeof(char),
                             (block_size - bytes_written), fp))
              < (block_size - bytes_written)) {
         r = 3;
