@@ -59,8 +59,6 @@ int db_create(char *dbname, int32_t max_depth)
     n_elems_per_node = ((block_size / 8) - 1) / 3;
     btree_size = (n_elems_per_node + 2) * block_size;
 
-    // TODO: Initialize file
-
     bytes_written = 0;
 
     if ((fw_rv = fwrite(&block_size, sizeof(int32_t), 1, fp)) == 1) {

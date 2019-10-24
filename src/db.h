@@ -17,6 +17,20 @@ typedef struct Database {
 } Database;
 
 
+typedef struct SchemaElement {
+
+    /*
+        dtype:
+            0 -> int64_t
+            1 -> string (char *)
+            2 -> float? (precision)?
+    */
+
+    int dtype;
+
+}
+
+
 int db_create(char *dbname, int32_t max_depth);
 int db_open(Database *db, char *dbname);
 int db_create_table(Database *db, char *tablename);
