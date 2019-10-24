@@ -28,7 +28,7 @@ typedef struct SchemaElement {
 
     int dtype;
 
-}
+} SchemaElement;
 
 
 int db_create(char *dbname, int32_t max_depth);

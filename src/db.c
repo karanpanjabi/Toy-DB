@@ -32,8 +32,6 @@ int db_create(char *dbname, int32_t max_depth)
     FILE *fp;
     struct stat dbfile_stat;
     int32_t block_size;
-    int n_elems_per_node;
-    int32_t btree_size;
     int64_t bytes_written;
     int32_t fw_rv;
     int ret;
@@ -56,8 +54,6 @@ int db_create(char *dbname, int32_t max_depth)
     }
 
     block_size = dbfile_stat.st_blksize;
-    n_elems_per_node = ((block_size / 8) - 1) / 3;
-    btree_size = (n_elems_per_node + 2) * block_size;
 
     bytes_written = 0;
 
