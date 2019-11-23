@@ -26,6 +26,7 @@ typedef struct SchemaElement {
             2 -> float? (precision)?
     */
 
+    char *fieldname;
     int dtype;
 
 } SchemaElement;
@@ -33,7 +34,8 @@ typedef struct SchemaElement {
 
 int db_create(char *dbname, int32_t max_depth);
 int db_open(Database *db, char *dbname);
-int db_create_table(Database *db, char *tablename);
+int db_create_table(Database *db, char *tablename,
+                    SchemaElement *schema, int n_schemaelements);
 int db_insert(Database *db, char *tablename, ...);
 int db_select(Database *db, char *tablename,
               int n_cols, char *column_names[],

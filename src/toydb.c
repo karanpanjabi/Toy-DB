@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "db.h"
+#include "toydb.h"
 #include "btree.h"
 
 
@@ -137,8 +137,8 @@ int db_open(Database *db, char *dbname)
 }
 
 
-// TODO: Accept schema too
-int db_create_table(Database *db, char *tablename)
+int db_create_table(Database *db, char *tablename,
+                    SchemaElement *schema, int n_schemaelements)
 {
 
     /*
@@ -148,7 +148,19 @@ int db_create_table(Database *db, char *tablename)
         tablename: String with the tablename to be created
     */
 
-    
+    int r, v;
+    Btree directory;
+
+    // generic failure return value
+    r = 1;
+
+    /* First schema element must be int64_t.
+       It will be the primary key.
+       If it is not an int64_t, return 2 to indicate this failure.  */
+    if (schema[0].dtype != 0)
+        return 2;
+
+    return r;
 
 }
 
@@ -184,9 +196,13 @@ int db_close(Database *db)
 {
 
     /*
-        
+        Closes the database.
+        This function will only close db->fp.
+
+        Return value:
+            return value of fclose
     */
 
-    
+    return fclose(db->fp);
 
 }
