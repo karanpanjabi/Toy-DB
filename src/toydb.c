@@ -152,8 +152,9 @@ int db_create_table(Database *db, char *tablename,
     */
 
     int r, v;
-    int i;
+    int i, j;
     int64_t ret;
+    char *dtype;
     Block block;
     Btree directory, table_index;
 
@@ -190,13 +191,18 @@ int db_create_table(Database *db, char *tablename,
             r = 3;
             goto ERR_CREATE;
         }
-        ret = snprintf(block.block, 8, "%s");
+        ret = snprintf(block.block, 8, "%s", schema[i].fieldname);
         if (ret >= 8) {
             r = 3;
             goto ERR_CREATE;
         } else {
             block.n_occupied += ret;
         }
+
+        dtype = (char *)(&(schema[i].dtype));
+        for (j = 0; j < sizeof(int32_t); j++)
+            block.block[block.n_occupied + j] = dtype[j];
+        block.n_occupied += sizeof(int32_t);
 
     }
 
