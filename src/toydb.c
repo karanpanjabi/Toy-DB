@@ -154,6 +154,7 @@ int db_create_table(Database *db, char *tablename,
     int r, v;
     int i, j;
     int64_t ret;
+    int64_t translated_tablename;
     char *dtype;
     Block block;
     Btree directory, table_index;
@@ -169,12 +170,18 @@ int db_create_table(Database *db, char *tablename,
         goto ERR_INVALID_SCHEMA;
     }
 
+    memset(&translated_tablename, 0, sizeof(int64_t));
+    memcpy(&translated_tablename, tablename, strlen(tablename));
+
     v = btree_open(&directory, db->fp, db->block_size, db->max_depth,
                    0, db->block_size);
     if (v != 0) {
         r = 4;
         goto ERR_DIRECTORY_OPEN;
     }
+
+    btree_insert(&directory, translated_tablename,
+                 (int64_t)fseek(db->fp, 0, SEEK_END));
 
     block.block_size = db->block_size;
     block.n_occupied = 0;
@@ -247,7 +254,58 @@ int db_insert(Database *db, char *tablename, ...)
         
     */
 
-    
+    int r, v;
+    int i, j;
+    int64_t index_offset;
+    int64_t ret;
+    int64_t translated_tablename;
+    char *dtype;
+    Block block;
+    Btree directory, table_index;
+
+    // generic failure return value
+    r = 1;
+
+    v = btree_open(&directory, db->fp, db->block_size, db->max_depth,
+                   0, db->block_size);
+    if (v != 0) {
+        r = 4;
+        goto ERR_DIRECTORY_OPEN;
+    }
+
+    memset(&translated_tablename, 0, sizeof(int64_t));
+    memcpy(&translated_tablename, tablename, strlen(tablename));
+
+    v = btree_open(&table_index, db->fp, db->block_size, db->max_depth,
+                   0, db->block_size);
+
+    block.block_size = db->block_size;
+    block.n_occupied = 0;
+    block.block = malloc(db->block_size * sizeof(char));
+    if (block.block == NULL) {
+        r = 1;
+        goto ERR_BLOCK_MALLOC;
+    }
+
+
+    ERR_INSERT:
+
+        free(block.block);
+    ERR_BLOCK_MALLOC:
+
+        v = btree_close(&table_index);
+        if (v != 0) {
+            r = 4;
+        }
+    ERR_TABLE_INDEX_OPEN:
+
+        v = btree_close(&directory);
+        if (v != 0) {
+            r = 4;
+        }
+    ERR_DIRECTORY_OPEN:
+
+    return r;
 
 }
 
