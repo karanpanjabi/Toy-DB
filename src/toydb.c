@@ -4,10 +4,12 @@
 
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 
 #include "toydb.h"
 #include "btree.h"
+#include "block.h"
 
 
 int db_create(char *dbname, int32_t max_depth)
@@ -149,7 +151,10 @@ int db_create_table(Database *db, char *tablename,
     */
 
     int r, v;
-    Btree directory;
+    int i;
+    int64_t ret;
+    Block *block;
+    Btree directory, table_index;
 
     // generic failure return value
     r = 1;
@@ -157,8 +162,60 @@ int db_create_table(Database *db, char *tablename,
     /* First schema element must be int64_t.
        It will be the primary key.
        If it is not an int64_t, return 2 to indicate this failure.  */
-    if (schema[0].dtype != 0)
-        return 2;
+    if (schema[0].dtype != 0) {
+        r = 2;
+        goto ERR_INVALID_SCHEMA;
+    }
+
+    v = btree_open(&directory, db->fp, db->block_size, db->max_depth,
+                   0, db->block_size);
+    if (v != 0) {
+        r = 4;
+        goto ERR_DIRECTORY_OPEN;
+    }
+
+    block->block_size = db->block_size;
+    block->n_occupied = 0;
+    block->block = malloc(db->block_size * sizeof(char));
+    if (block->block == NULL) {
+        r = 1;
+        goto ERR_BLOCK_MALLOC;
+    }
+
+    for (i = 0; i < n_schemaelements; i++) {
+
+        ret = snprintf(block->block, 8, "%s");
+        if (ret > 8) {
+            r = 3;
+            goto ERR_CREATE;
+        }
+
+    }
+
+    v = btree_open(&table_index, db->fp, db->block_size,
+                   db->max_depth, 1, 0);
+    if (v != 0) {
+        r = 4;
+        goto ERR_BTREE_CREATE;
+    }
+    v = btree_close(&table_index);
+    if (v != 0) {
+        r = 4;
+        goto ERR_BTREE_CREATE;
+    }
+
+    ERR_CREATE:
+    ERR_BTREE_CREATE:
+
+        free(block->block);
+    ERR_BLOCK_MALLOC:
+
+        v = btree_close(&directory);
+        if (v != 0) {
+            r = 4;
+        }
+    ERR_DIRECTORY_OPEN:
+    ERR_INVALID_SCHEMA:
 
     return r;
 

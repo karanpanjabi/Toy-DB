@@ -26,8 +26,8 @@ typedef struct SchemaElement {
             2 -> float? (precision)?
     */
 
-    char *fieldname;
-    int dtype;
+    char fieldname[8];
+    int32_t dtype;
 
 } SchemaElement;
 
