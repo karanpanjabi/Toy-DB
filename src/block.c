@@ -29,8 +29,8 @@ int block_read(Block *s, FILE *fp, int64_t offset)
         return 2;
     }
 
-    if (fread(s->block, sizeof(char), s->n_occupied, fp)
-            < s->n_occupied) {
+    if (fread(s->block, sizeof(char), s->block_size, fp)
+            < s->block_size) {
         return 1;
     }
 
@@ -45,7 +45,7 @@ int block_write(Block *s, FILE *fp, int64_t offset)
     /*
         s: Pointer to an allocated Block where data will be written.
            Data to write will be taken from s->block and
-           s->n_occupied bytes will be written if call is successful.
+           s->block_size bytes will be written if call is successful.
         fp: File pointer to file where block must be written. File
             must be opened in a mode where write to arbitrary offset
             is permitted.
@@ -62,8 +62,8 @@ int block_write(Block *s, FILE *fp, int64_t offset)
         return 2;
     }
 
-    if (fwrite(s->block, sizeof(char), s->n_occupied, fp)
-            < s->n_occupied) {
+    if (fwrite(s->block, sizeof(char), s->block_size, fp)
+            < s->block_size) {
         return 1;
     }
 
@@ -80,7 +80,7 @@ int block_append(Block *s, FILE *fp)
     /*
         s: Pointer to an allocated Block where data will be appended.
            Data to append will be taken from s->block and
-           s->n_occupied bytes will be appended if call is successful.
+           s->block_size bytes will be appended if call is successful.
         fp: File pointer to file where block must be appended. File
             must be opened in a mode where append is permitted.
 
@@ -94,8 +94,8 @@ int block_append(Block *s, FILE *fp)
         return 2;
     }
 
-    if (fwrite(s->block, sizeof(char), s->n_occupied, fp)
-            < s->n_occupied) {
+    if (fwrite(s->block, sizeof(char), s->block_size, fp)
+            < s->block_size) {
         return 1;
     }
 
