@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "toydb.h"
 #include "btree.h"
@@ -153,7 +154,7 @@ int db_create_table(Database *db, char *tablename,
     int r, v;
     int i;
     int64_t ret;
-    Block *block;
+    Block block;
     Btree directory, table_index;
 
     // generic failure return value
@@ -174,23 +175,34 @@ int db_create_table(Database *db, char *tablename,
         goto ERR_DIRECTORY_OPEN;
     }
 
-    block->block_size = db->block_size;
-    block->n_occupied = 0;
-    block->block = malloc(db->block_size * sizeof(char));
-    if (block->block == NULL) {
+    block.block_size = db->block_size;
+    block.n_occupied = 0;
+    block.block = malloc(db->block_size * sizeof(char));
+    if (block.block == NULL) {
         r = 1;
         goto ERR_BLOCK_MALLOC;
     }
 
     for (i = 0; i < n_schemaelements; i++) {
 
-        ret = snprintf(block->block, 8, "%s");
-        if (ret > 8) {
+        if (block.block_size - block.n_occupied <
+                sizeof(SchemaElement)) {
             r = 3;
             goto ERR_CREATE;
         }
+        ret = snprintf(block.block, 8, "%s");
+        if (ret >= 8) {
+            r = 3;
+            goto ERR_CREATE;
+        } else {
+            block.n_occupied += ret;
+        }
 
     }
+
+    memset(block.block + block.n_occupied, 0,
+           block.block_size - block.n_occupied);
+    block_append(&block, db->fp);
 
     v = btree_open(&table_index, db->fp, db->block_size,
                    db->max_depth, 1, 0);
@@ -207,7 +219,7 @@ int db_create_table(Database *db, char *tablename,
     ERR_CREATE:
     ERR_BTREE_CREATE:
 
-        free(block->block);
+        free(block.block);
     ERR_BLOCK_MALLOC:
 
         v = btree_close(&directory);
