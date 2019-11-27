@@ -33,3 +33,32 @@ void print_node(Node *ptr)
     printf("]\n\n");
     printf("-------Node end-------\n");
 }
+
+void display_nodes_recurse(Btree *s, Node *node)
+{
+    print_node(node);
+
+    if(!node->isLeaf)
+    {
+        for (int i = 0; i <= node->n; i++)
+        {
+            Node child;
+            init_node(&child, 2*s->t - 1);
+            read_node(s, &child, node->children_offsets[i]);
+            display_nodes_recurse(s, &child);
+            del_node(&child);
+        }
+        
+    }
+}
+
+void recurse_tree(Btree *s)
+{
+    Node root;
+    init_node(&root, 2*s->t - 1);
+
+    read_node(s, &root, s->root_offset);
+    display_nodes_recurse(s, &root);
+
+    del_node(&root);
+}
