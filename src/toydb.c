@@ -12,6 +12,8 @@
 #include "btree.h"
 #include "block.h"
 
+#define BLKROUNDDOWN(adr, blksize) ((adr / blksize) * blksize)
+
 
 int db_create(char *dbname, int32_t max_depth)
 {
@@ -180,8 +182,10 @@ int db_create_table(Database *db, char *tablename,
         goto ERR_DIRECTORY_OPEN;
     }
 
+    fseek(db->fp, 0, SEEK_END);
     btree_insert(&directory, translated_tablename,
-                 (int64_t)fseek(db->fp, 0, SEEK_END));
+                 BLKROUNDDOWN((int64_t)ftell(db->fp),
+                               db->block_size));
 
     block.block_size = db->block_size;
     block.n_occupied = 0;
@@ -229,6 +233,8 @@ int db_create_table(Database *db, char *tablename,
         goto ERR_BTREE_CREATE;
     }
 
+    r = 0;
+
     ERR_CREATE:
     ERR_BTREE_CREATE:
 
@@ -273,11 +279,26 @@ int db_insert(Database *db, char *tablename, ...)
         goto ERR_DIRECTORY_OPEN;
     }
 
-    memset(&translated_tablename, 0, sizeof(int64_t));
-    memcpy(&translated_tablename, tablename, strlen(tablename));
+    // finding integer translation of table name
+    // memset(&translated_tablename, 0, sizeof(int64_t));
+    translated_tablename = 0;
+    memcpy(&translated_tablename, tablename, 7);
+
+    // finding offset of table index
+    v = btree_search(&directory, translated_tablename, &index_offset);
+    if (v != 0) {
+        r = 2;
+        goto ERR_INSERT;
+    }
 
     v = btree_open(&table_index, db->fp, db->block_size, db->max_depth,
-                   0, db->block_size);
+                   0, index_offset);
+    if (v != 0) {
+        r = 4;
+        goto ERR_TABLE_INDEX_OPEN;
+    }
+
+    v = btree_insert();
 
     block.block_size = db->block_size;
     block.n_occupied = 0;
@@ -287,6 +308,7 @@ int db_insert(Database *db, char *tablename, ...)
         goto ERR_BLOCK_MALLOC;
     }
 
+    r = 0;
 
     ERR_INSERT:
 

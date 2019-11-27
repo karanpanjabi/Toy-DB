@@ -6,8 +6,6 @@
 #include <stdarg.h>
 
 
-// TODO: figure out where to store schema
-
 typedef struct Database {
 
     FILE *fp;
