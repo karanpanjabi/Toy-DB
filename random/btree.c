@@ -161,7 +161,7 @@ int clrs_btree_search(Btree *s, Node *x, int64_t key, int64_t *value)
     if (i < x->n && key == x->records[i].key)
     {
         *value = x->records[i].value_offset;
-        return 1; // maybe return offset of node x rather than this
+        return 0;
     }
     else if (x->isLeaf)
     {
