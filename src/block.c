@@ -2,8 +2,11 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "block.h"
+
+#define BLKROUNDDOWN(adr, blksize) ((adr / blksize) * blksize)
 
 
 int block_read(Block *s, FILE *fp, int64_t offset)
@@ -90,9 +93,17 @@ int block_append(Block *s, FILE *fp)
             2: fseek error. errno is set by fseek.
     */
 
+    int64_t offset;
+    char *fill;
+
     if (fseek(fp, 0, SEEK_END) == -1) {
         return 2;
     }
+
+    offset = ftell(fp);
+    fill = malloc(s->block_size - offset);
+    memset(fill, 0, s->block_size - offset);
+    fwrite(fill, sizeof(char), s->block_size - offset, fp);
 
     if (fwrite(s->block, sizeof(char), s->block_size, fp)
             < s->block_size) {
