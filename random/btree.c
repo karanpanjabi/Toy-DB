@@ -19,7 +19,7 @@ void update_btree_header(Btree *s);
 
 int btree_open(Btree *s, FILE *fp, int32_t block_size,
                int32_t max_depth,
-               int do_create, int64_t root_offset)
+               int do_create, int64_t btree_offset)
 {
 
     /*
@@ -30,7 +30,7 @@ int btree_open(Btree *s, FILE *fp, int32_t block_size,
         fp: File pointer to filein which B-tree is present
         do_create: Boolean value, non-zero if the B-tree to be
                    created, 0 if it is already present
-        root_offset: Offset at which the B-tree is found in the file.
+        btree_offset: Offset at which the B-tree is found in the file.
                      Value ignored if do_create is non-zero. In this
                      case, empty B-tree is appended to file
 
@@ -104,8 +104,9 @@ int btree_open(Btree *s, FILE *fp, int32_t block_size,
     }
     else
     {
-        // read btree at root_offset?
+        // read btree at btree_offset?
         Btree temptree;
+        fseek(fp, btree_offset, SEEK_SET);
         fread(&temptree, sizeof(Btree), 1, fp);
         s->t = temptree.t;
         s->root_offset = temptree.root_offset;
@@ -169,8 +170,8 @@ int clrs_btree_search(Btree *s, Node *x, int64_t key, int64_t *value)
     }
     else
     {
-        Node xci; // TODO init node
-        init_node(&xci, 2 * s->t - 1);
+        Node xci; 
+        init_node(&xci, 2 * s->t - 1); // init node
         read_node(s, &xci, x->children_offsets[i]); // figure out the offset of the child i
         int ret = clrs_btree_search(s, &xci, key, value);
         del_node(&xci); // free up arrays of xci

@@ -13,7 +13,8 @@
 #include "block.h"
 
 #define BLKROUNDDOWN(adr, blksize) ((adr / blksize) * blksize)
-
+#define BLKROUNDUP_C(adr, blksize) (BLKROUNDDOWN(adr, blksize) + blksize)
+#define BLKROUNDUP(adr, blksize) (adr % blksize != 0 ? BLKROUNDUP_C(adr, blksize) : adr)
 
 int db_create(char *dbname, int32_t max_depth)
 {
@@ -81,7 +82,7 @@ int db_create(char *dbname, int32_t max_depth)
         goto FWRITE_FAILED;
     }
 
-    ret = btree_open(&directory, fp, block_size, max_depth, 1, 0);
+    ret = btree_open(&directory, fp, block_size, max_depth, 1, 0);  // why 0 over here -> 0 is ignored because do_create = 1
     if (ret != 0) {
         r = 4;
         goto BTREE_ERROR;
@@ -173,7 +174,7 @@ int db_create_table(Database *db, char *tablename,
     }
 
     memset(&translated_tablename, 0, sizeof(int64_t));
-    memcpy(&translated_tablename, tablename, strlen(tablename));
+    memcpy(&translated_tablename, tablename, sizeof(int64_t));  // make sure we copy only the amt translated_tablename can hold
 
     v = btree_open(&directory, db->fp, db->block_size, db->max_depth,
                    0, db->block_size);
@@ -184,8 +185,8 @@ int db_create_table(Database *db, char *tablename,
 
     fseek(db->fp, 0, SEEK_END);
     btree_insert(&directory, translated_tablename,
-                 BLKROUNDDOWN((int64_t)ftell(db->fp),
-                               db->block_size));
+                 BLKROUNDUP((int64_t)ftell(db->fp),
+                               db->block_size));    // BLKROUNDDOWN can overwrite data
 
     block.block_size = db->block_size;
     block.n_occupied = 0;
