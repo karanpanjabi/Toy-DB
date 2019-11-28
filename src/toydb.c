@@ -11,6 +11,7 @@
 #include "toydb.h"
 #include "btree.h"
 #include "block.h"
+#include "util.h"
 
 #define BLKROUNDDOWN(adr, blksize) ((adr / blksize) * blksize)
 #define BLKROUNDUP_C(adr, blksize) (BLKROUNDDOWN(adr, blksize) + blksize)
@@ -161,7 +162,6 @@ int db_create_table(Database *db, char *tablename,
     int64_t ret;
     int64_t translated_tablename;
     char *dtype;
-    Block block;
     Btree directory, table_index;
 
     // generic failure return value
@@ -217,7 +217,6 @@ int db_create_table(Database *db, char *tablename,
     ERR_CREATE:
     ERR_BTREE_CREATE:
 
-        free(block.block);
     ERR_BLOCK_MALLOC:
 
         v = btree_close(&directory);
@@ -363,13 +362,59 @@ int db_select(Database *db, char *tablename,
 {
 
     /*
-        
+        if n_cols = 0, select *
     */
 
-    // read the entire table
+    int r, v;
+    int i, j;
+    int64_t index_offset;
+    int64_t ret;
+    int64_t translated_tablename;
+    char *dtype;
+    Btree directory, table_index;
 
+    // generic failure return value
+    r = 1;
+
+    v = btree_open(&directory, db->fp, db->block_size, db->max_depth,
+                   0, db->block_size);
+    if (v != 0) {
+        r = 4;
+        return -1;
+    }
+
+    // finding integer translation of table name
+    // memset(&translated_tablename, 0, sizeof(int64_t));
+    translated_tablename = 0;
+    memcpy(&translated_tablename, tablename, 7);
+
+    // finding offset of table index
+    v = btree_search(&directory, translated_tablename, &index_offset);
+    if (v != 0) {
+        r = 2;
+        return -1;
+    }
+
+    // read schema from index_offset
+    fseek(db->fp, index_offset, SEEK_SET);
+    Schema schema;
+    fread(&schema, sizeof(Schema), 1, db->fp);
+
+    // read the btree for the table
+    v = btree_open(&table_index, db->fp, db->block_size, db->max_depth, 0, index_offset + db->block_size );     // might have to use pgrounddown on the other side
+    if (v != 0) {
+        r = 4;
+        return -1;
+    }
+
+    // TODO: verify the columns with the ones in schema
+
+    // read the entire table
+    // store the offsets to data in some list
+    // fetch the data at the offsets and print according to schema
     // print/append to a struct those values which satisfy the condition
 
+    recurse_tree_data(&table_index, &schema);
 }
 
 
