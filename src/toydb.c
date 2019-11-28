@@ -16,6 +16,8 @@
 #define BLKROUNDUP_C(adr, blksize) (BLKROUNDDOWN(adr, blksize) + blksize)
 #define BLKROUNDUP(adr, blksize) (adr % blksize != 0 ? BLKROUNDUP_C(adr, blksize) : adr)
 
+#define MIN(a, b) ((b) < (a) ? (b) : (a))
+
 int db_create(char *dbname, int32_t max_depth)
 {
 
@@ -144,7 +146,7 @@ int db_open(Database *db, char *dbname)
 
 
 int db_create_table(Database *db, char *tablename,
-                    SchemaElement *schema, int n_schemaelements)
+                    Schema *schema)
 {
 
     /*
@@ -168,13 +170,15 @@ int db_create_table(Database *db, char *tablename,
     /* First schema element must be int64_t.
        It will be the primary key.
        If it is not an int64_t, return 2 to indicate this failure.  */
-    if (schema[0].dtype != 0) {
+    if (schema->elements[0].dtype != 0) {
         r = 2;
         goto ERR_INVALID_SCHEMA;
     }
 
-    memset(&translated_tablename, 0, sizeof(int64_t));
-    memcpy(&translated_tablename, tablename, sizeof(int64_t));  // make sure we copy only the amt translated_tablename can hold
+    translated_tablename = 0;
+    memcpy(&translated_tablename, tablename, MIN(sizeof(int64_t), strlen(tablename)));  // make sure we copy only the amt translated_tablename can hold
+
+    // printf("%s\n", translated_tablename);
 
     v = btree_open(&directory, db->fp, db->block_size, db->max_depth,
                    0, db->block_size);
@@ -183,47 +187,21 @@ int db_create_table(Database *db, char *tablename,
         goto ERR_DIRECTORY_OPEN;
     }
 
-    fseek(db->fp, 0, SEEK_END);
-    btree_insert(&directory, translated_tablename,
-                 BLKROUNDUP((int64_t)ftell(db->fp),
-                               db->block_size));    // BLKROUNDDOWN can overwrite data
+    fseek(db->fp, 0, SEEK_END);     // to figure out where the new table is inserted
+    int64_t new_table_pos = BLKROUNDUP((int64_t)ftell(db->fp), db->block_size);
+    btree_insert(&directory, translated_tablename, new_table_pos);    
 
-    block.block_size = db->block_size;
-    block.n_occupied = 0;
-    block.block = malloc(db->block_size * sizeof(char));
-    if (block.block == NULL) {
-        r = 1;
-        goto ERR_BLOCK_MALLOC;
-    }
+    fseek(db->fp, new_table_pos, SEEK_SET);
+    // TODO: print directory btree
 
-    for (i = 0; i < n_schemaelements; i++) {
+    // insert schema at this position
+    fwrite(schema, sizeof(Schema), 1, db->fp);
 
-        if (block.block_size - block.n_occupied <
-                sizeof(SchemaElement)) {
-            r = 3;
-            goto ERR_CREATE;
-        }
-        ret = snprintf(block.block, 8, "%s", schema[i].fieldname);
-        if (ret >= 8) {
-            r = 3;
-            goto ERR_CREATE;
-        } else {
-            block.n_occupied += ret;
-        }
+    // create btree for this table in the next block
+    v = btree_open(&table_index, db->fp, db->block_size, db->max_depth, 1, 0);
 
-        dtype = (char *)(&(schema[i].dtype));
-        for (j = 0; j < sizeof(int32_t); j++)
-            block.block[block.n_occupied + j] = dtype[j];
-        block.n_occupied += sizeof(int32_t);
-
-    }
-
-    memset(block.block + block.n_occupied, 0,
-           block.block_size - block.n_occupied);
-    block_append(&block, db->fp);
-
-    v = btree_open(&table_index, db->fp, db->block_size,
-                   db->max_depth, 1, 0);
+    // TODO: verify if btree got created
+    
     if (v != 0) {
         r = 4;
         goto ERR_BTREE_CREATE;
@@ -254,7 +232,7 @@ int db_create_table(Database *db, char *tablename,
 }
 
 
-int db_insert(Database *db, char *tablename, ...)
+int db_insert(Database *db, char *tablename, DataRecord *records, int n_records)
 {
 
     /*
@@ -267,7 +245,6 @@ int db_insert(Database *db, char *tablename, ...)
     int64_t ret;
     int64_t translated_tablename;
     char *dtype;
-    Block block;
     Btree directory, table_index;
 
     // generic failure return value
@@ -292,28 +269,74 @@ int db_insert(Database *db, char *tablename, ...)
         goto ERR_INSERT;
     }
 
-    v = btree_open(&table_index, db->fp, db->block_size, db->max_depth,
-                   0, index_offset);
+    // read schema from index_offset
+    fseek(db->fp, index_offset, SEEK_SET);
+    Schema schema;
+    fread(&schema, sizeof(Schema), 1, db->fp);
+
+    // read the btree for the table
+    v = btree_open(&table_index, db->fp, db->block_size, db->max_depth, 0, index_offset + db->block_size );     // might have to use pgrounddown on the other side
     if (v != 0) {
         r = 4;
         goto ERR_TABLE_INDEX_OPEN;
     }
 
-    v = btree_insert();
-
-    block.block_size = db->block_size;
-    block.n_occupied = 0;
-    block.block = malloc(db->block_size * sizeof(char));
-    if (block.block == NULL) {
-        r = 1;
-        goto ERR_BLOCK_MALLOC;
+    // insert according to schema
+    // verify schema and find size of data to be written
+    int size = 0;
+    if(n_records != schema.n)
+    {
+        return -1; // wrong number of columns
     }
+    for (int i = 0; i < schema.n; i++)
+    {
+        if(schema.elements[i].dtype != records[i].dtype)
+            return -1;  // wrong type
+        
+        if(schema.elements[i].dtype == 0)
+            size += sizeof(int64_t);
+        else if(schema.elements[i].dtype == 1)
+            size += strlen(records[i].data) + 1;
+        else if(schema.elements[i].dtype == 2)
+            size += sizeof(float);
+    }
+    
+    // seek to the end where the data has to be inserted
+    fseek(db->fp, 0, SEEK_END);
+    int64_t record_pos = ftell(db->fp);
+
+    // check if btree already has that key
+    v = btree_insert(&table_index, *(int64_t *) records[0].data, record_pos );
+    if(v == -1)
+    {
+        return -1; // key already is present
+    }
+    
+    // assign buffer to load data
+    void *buffer = (void *) malloc(size * sizeof(void));
+    int copied_size = 0;
+    for (int i = 0; i < n_records; i++)
+    {
+        int vsize = 0;
+        if(records[i].dtype == 0)
+            vsize = sizeof(int64_t);
+        else if(records[i].dtype == 1)
+            vsize = strlen(records[i].data) + 1;
+        else if(records[i].dtype == 2)
+            vsize = sizeof(float);
+        memcpy(buffer + copied_size, records[i].data, vsize);
+        copied_size += vsize;
+    }
+
+    fseek(db->fp, record_pos, SEEK_SET);
+    fwrite(buffer, sizeof(void), size, db->fp);
+    
+    free(buffer);
 
     r = 0;
 
     ERR_INSERT:
 
-        free(block.block);
     ERR_BLOCK_MALLOC:
 
         v = btree_close(&table_index);
@@ -343,7 +366,9 @@ int db_select(Database *db, char *tablename,
         
     */
 
-    
+    // read the entire table
+
+    // print/append to a struct those values which satisfy the condition
 
 }
 

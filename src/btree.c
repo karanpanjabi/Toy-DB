@@ -106,7 +106,7 @@ int btree_open(Btree *s, FILE *fp, int32_t block_size,
     {
         // read btree at btree_offset
         Btree temptree;
-        fseek(fp, btree_offset, SEEK_SET);
+        fseek(fp, BLKROUNDDOWN(btree_offset, block_size), SEEK_SET);
         fread(&temptree, sizeof(Btree), 1, fp);
         s->t = temptree.t;
         s->root_offset = temptree.root_offset;
@@ -440,6 +440,7 @@ int btree_insert(Btree *s, int64_t key, int64_t value)
     
 
     del_node(root);
+    return 0;
 }
 
 void update_btree_header(Btree *s)
