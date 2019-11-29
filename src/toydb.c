@@ -66,19 +66,20 @@ int db_create(char *dbname, int32_t max_depth)
 
     bytes_written = 0;
 
-    if ((fw_rv = fwrite(&block_size, sizeof(int32_t), 1, fp)) == 1) {
+    if ((fw_rv = fwrite(&block_size, sizeof(int32_t), 1, fp)) != 1) {
         r = 3;
         goto FWRITE_FAILED;
     }
-    bytes_written += fw_rv;
+    bytes_written += sizeof(int32_t);
 
-    if ((fw_rv = fwrite(&max_depth, sizeof(int32_t), 1, fp)) == 1) {
+    if ((fw_rv = fwrite(&max_depth, sizeof(int32_t), 1, fp)) != 1) {
         r = 3;
         goto FWRITE_FAILED;
     }
-    bytes_written += fw_rv;
+    bytes_written += sizeof(int32_t);
 
-    if ((fw_rv = fwrite("\0", sizeof(char),
+    char c = '\0';
+    if ((fw_rv = fwrite(&c, sizeof(char),
                             (block_size - bytes_written), fp))
              < (block_size - bytes_written)) {
         r = 3;

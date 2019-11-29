@@ -23,7 +23,7 @@ void print_node(Node *ptr)
     printf("Records: [");
     for (int i = 0; i < ptr->n; i++)
     {
-        printf("%ld %ld, ", ptr->records[i].key, ptr->records[i].value_offset);
+        printf("%s %ld %ld, ", (char *)&(ptr->records[i].key), ptr->records[i].key, ptr->records[i].value_offset);
     }
     printf("]\n");
 
@@ -147,4 +147,55 @@ void recurse_tree_data(Btree *s, Schema *schema)
     display_nodes_recurse_data(s, &root, schema);
 
     del_node(&root);
+}
+
+void print_dir_btree(Database *db)
+{
+    fseek(db->fp, db->block_size, SEEK_SET);
+    Btree directory;
+    btree_open(&directory, db->fp, db->block_size, db->max_depth, 0, db->block_size);
+    disp_btree(&directory);
+    recurse_tree(&directory);
+}
+
+void print_schema(Schema *schema)
+{
+    for (int i = 0; i < schema->n; i++)
+    {
+        switch(schema->elements[i].dtype)
+        {
+            case 0:
+                ;
+                printf("%s int\n", schema->elements[i].fieldname);
+                break;
+            case 1:
+                ;
+                printf("%s str\n", schema->elements[i].fieldname);
+                break;
+            case 2:
+                ;
+                printf("%s float\n", schema->elements[i].fieldname);
+                break;
+        }
+    }
+}
+
+void read_schema(Database *db, char *table)
+{
+    fseek(db->fp, db->block_size, SEEK_SET);
+    Btree directory; Btree *dirbtree = &directory;
+    btree_open(&directory, db->fp, db->block_size, db->max_depth, 0, db->block_size);
+    
+    int64_t translated_tablename = *(int64_t *) table;
+
+    int64_t schema_offset;
+    if(btree_search(dirbtree, translated_tablename, &schema_offset) != -1)
+        return;
+
+    Schema s;
+    fseek(dirbtree->fp, schema_offset, SEEK_SET);
+    fwrite(&s, sizeof(Schema), 1, dirbtree->fp);
+
+    print_schema(&s);
+    
 }
