@@ -17,8 +17,6 @@
 #define BLKROUNDUP_C(adr, blksize) (BLKROUNDDOWN(adr, blksize) + blksize)
 #define BLKROUNDUP(adr, blksize) (adr % blksize != 0 ? BLKROUNDUP_C(adr, blksize) : adr)
 
-#define MIN(a, b) ((b) < (a) ? (b) : (a))
-
 int db_create(char *dbname, int32_t max_depth)
 {
 
@@ -195,6 +193,8 @@ int db_create_table(Database *db, char *tablename,
     fseek(db->fp, new_table_pos, SEEK_SET);
     // TODO: print directory btree
 
+    printf("Schema while creation:\n");
+    print_schema(schema);
     // insert schema at this position
     fwrite(schema, sizeof(Schema), 1, db->fp);
 
@@ -220,10 +220,10 @@ int db_create_table(Database *db, char *tablename,
 
     ERR_BLOCK_MALLOC:
 
-        v = btree_close(&directory);
-        if (v != 0) {
-            r = 4;
-        }
+        // v = btree_close(&directory);
+        // if (v != 0) {
+        //     r = 4;
+        // }
     ERR_DIRECTORY_OPEN:
     ERR_INVALID_SCHEMA:
 
@@ -260,7 +260,7 @@ int db_insert(Database *db, char *tablename, DataRecord *records, int n_records)
     // finding integer translation of table name
     // memset(&translated_tablename, 0, sizeof(int64_t));
     translated_tablename = 0;
-    memcpy(&translated_tablename, tablename, 7);
+    memcpy(&translated_tablename, tablename, MIN(sizeof(int64_t), strlen(tablename)));
 
     // finding offset of table index
     v = btree_search(&directory, translated_tablename, &index_offset);

@@ -4,6 +4,8 @@
 #include "btree.h"
 #include "toydb.h"
 
+#include "util.h"
+
 void disp_btree(Btree *t)
 {
     printf("-------BTree header-------\n");
@@ -43,6 +45,7 @@ void print_data_schema(int64_t data_offset, Schema *schema, Btree *s)
     static char outbuff[256];
 
     fseek(s->fp, data_offset, SEEK_SET);
+    printf("\n");
     for (int i = 0; i < schema->n; i++)
     {
         switch (schema->elements[i].dtype)
@@ -68,6 +71,7 @@ void print_data_schema(int64_t data_offset, Schema *schema, Btree *s)
                 break;
         }
     }
+    printf("\n");
 }
 
 void print_node_data(Node *ptr, Schema *schema, Btree *s)
@@ -180,22 +184,35 @@ void print_schema(Schema *schema)
     }
 }
 
-void read_schema(Database *db, char *table)
+void read_table_data(Database *db, char *table)
 {
     fseek(db->fp, db->block_size, SEEK_SET);
     Btree directory; Btree *dirbtree = &directory;
     btree_open(&directory, db->fp, db->block_size, db->max_depth, 0, db->block_size);
     
-    int64_t translated_tablename = *(int64_t *) table;
+    int64_t translated_tablename;
+
+    translated_tablename = 0;
+    memcpy(&translated_tablename, table, MIN(sizeof(int64_t), strlen(table)));
 
     int64_t schema_offset;
-    if(btree_search(dirbtree, translated_tablename, &schema_offset) != -1)
+    if(btree_search(dirbtree, translated_tablename, &schema_offset) != 0)
         return;
 
     Schema s;
     fseek(dirbtree->fp, schema_offset, SEEK_SET);
-    fwrite(&s, sizeof(Schema), 1, dirbtree->fp);
+    fread(&s, sizeof(Schema), 1, dirbtree->fp);
 
     print_schema(&s);
     
+    Btree table_btree;
+
+    int v = btree_open(&table_btree, db->fp, db->block_size, db->max_depth,
+                   0, schema_offset + db->block_size );
+    if (v != 0) {
+        return;
+    }
+
+    // print data
+    recurse_tree_data(&table_btree, &s);
 }

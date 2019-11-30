@@ -8,9 +8,9 @@ int main(int argc, char const *argv[])
 {
     Database db;
 
-    printf("%d\n", db_open(&db, "testdb.db"));
+    printf("db_open returned: %d\n", db_open(&db, "testdb.db"));
 
-    read_schema(&db, "hello");
+    read_table_data(&db, "hello");
 
     return 0;
 }

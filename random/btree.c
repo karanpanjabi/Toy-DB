@@ -216,10 +216,10 @@ int btree_close(Btree *s)
             1: fclose failed. fclose will set errno.
     */
 
-    if (fclose(s->fp) == EOF)
-    {
-        return 1;
-    }
+    // if (fclose(s->fp) == EOF)
+    // {
+    //     return 1;
+    // }
 
     return 0;
 }

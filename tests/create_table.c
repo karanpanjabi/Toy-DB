@@ -18,7 +18,7 @@ int main(int argc, char const *argv[])
     schema.n++;
     schema.elements[1] = (SchemaElement) { "name", 1 };
     schema.n++;
-    printf("%d\n", db_create_table(&db, "hello", &schema));
+    printf("db_create_table returned: %d\n", db_create_table(&db, "hello", &schema));
 
     print_schema(&schema);
 
